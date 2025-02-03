@@ -6,6 +6,7 @@ import {
   deleteOrganization,
   updateUserRole,
   manageMembers,
+  getUserOrganizations,
 } from "../controller/organization.controller.js";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.use(authMiddleware);
 router.post("/", createOrganization);
 router.put("/:orgId", checkRole(["Owner", "Admin"]), updateOrganization);
 router.delete("/:orgId", checkRole(["Owner"]), deleteOrganization);
+router.get("/all", getUserOrganizations);
 
 // Member management routes
 router.put(

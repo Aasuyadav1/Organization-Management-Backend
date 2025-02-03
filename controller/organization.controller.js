@@ -170,10 +170,24 @@ const manageMembers = async (req, res) => {
   }
 };
 
+// get User's organizations 
+const getUserOrganizations = async (req, res) => {
+  try {
+
+    const organizations = await Organization.find({ members: { $elemMatch: { userId: req.user._id } } });
+    
+    res.json(organizations);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to get user's organizations" });
+  }
+};
+
+// export all controller functions
 export {
   createOrganization,
   updateOrganization,
   deleteOrganization,
   updateUserRole,
   manageMembers,
+  getUserOrganizations,
 };
