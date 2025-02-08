@@ -3,21 +3,39 @@ import { User } from "../models/user-model.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
+    // Get token from header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided"
+      });
     }
 
+    const token = authHeader.split(" ")[1];
+
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
+    
+    // Get user from token
+    const user = await User.findById(decoded.userId).select("-password");
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({
+        success: false,
+        message: "User not found"
+      });
     }
 
+    // Attach user to request object
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    console.error("Auth middleware error:", error);
+    return res.status(401).json({
+      success: false,
+      message: "Not authorized",
+      error: error.message
+    });
   }
 };
 
@@ -28,7 +46,7 @@ const checkRole = (roles) => {
       (org) => org.organizationId.toString() === orgId
     );
 
-    if (!userOrg || !roles.includes(userOrg.role)) {
+    if (!userOrg || !roles.map(r => r.toLowerCase()).includes(userOrg.role.toLowerCase())) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
     next();

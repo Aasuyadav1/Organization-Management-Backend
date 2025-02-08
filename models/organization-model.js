@@ -2,26 +2,36 @@ import mongoose from "mongoose";
 
 const organizationSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    description: String,
-    logo: String,
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: {
+      type: String,
+      required: true
+    },
+    logo: {
+      type: String
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: true
     },
-    members: [
-      {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        role: {
-          type: String,
-          enum: ["Owner", "Admin", "Member"],
-          required: true,
-        },
+    members: [{
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
       },
-    ],
+      role: {
+        type: String,
+        enum: ["owner", "admin", "member"],
+        default: "member"
+      }
+    }]
   },
   { timestamps: true }
 );
 
-export const Organization = mongoose.model("Organization", organizationSchema);
+export default mongoose.model("Organization", organizationSchema);
