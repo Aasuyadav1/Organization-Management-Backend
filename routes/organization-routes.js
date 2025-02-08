@@ -7,18 +7,21 @@ import {
   updateUserRole,
   manageMembers,
   getUserOrganizations,
-  getOrganizationMembers
+  getOrganizationMembers,
+  getOrganizationById
 } from "../controller/organization.controller.js";
 
 const router = Router();
 
+// Apply authentication middleware to all routes
 router.use(authMiddleware);
 
-// Organization routes
+// Organization CRUD routes
 router.post("/", createOrganization);
+router.get("/all", getUserOrganizations);
 router.put("/:orgId", checkRole(["owner", "admin"]), updateOrganization);
 router.delete("/:orgId", checkRole(["owner"]), deleteOrganization);
-router.get("/all", getUserOrganizations);
+router.get("/:orgId", getOrganizationById);
 
 // Member management routes
 router.put(
@@ -26,13 +29,13 @@ router.put(
   checkRole(["owner", "admin"]),
   updateUserRole
 );
+
 router.post(
   "/:orgId/users/:userId",
   checkRole(["owner", "admin"]),
   manageMembers
 );
 
-// Get organization members route
-router.get('/:organizationId/members', getOrganizationMembers);
+router.get("/:organizationId/members", getOrganizationMembers);
 
 export const organizationRoutes = router;

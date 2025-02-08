@@ -1,6 +1,7 @@
 import { User } from "../models/user-model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { Organization } from "../models/organization-model.js";
 
 const register = async (req, res) => {
   try {
@@ -34,9 +35,7 @@ const register = async (req, res) => {
     const user = new User({ name, email, password });
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
 
     res.status(201).json({
       success: true,
@@ -89,9 +88,7 @@ const login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
 
     res.json({
       success: true,
@@ -116,4 +113,63 @@ const login = async (req, res) => {
   }
 };
 
-export { register, login };
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, { password: 0 }); // Exclude password field
+    
+    res.json({
+      success: true,
+      message: "Users retrieved successfully",
+      data: {
+        users
+      }
+    });
+  } catch (error) {
+    console.error("Error in getAllUsers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving users",
+      error: error.message
+    });
+  }
+};
+
+const getRemainingUsersInOrganization = async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    // Get the organization and its members
+    const organization = await Organization.findById(orgId);
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found"
+      });
+    }
+
+    // Get all member IDs including owner
+    const existingMemberIds = organization.members.map(member => member.user.toString());
+
+    // Find users who are not in the organization
+    const remainingUsers = await User.find({
+      _id: { $nin: existingMemberIds }
+    }, { password: 0 }); // Exclude password field
+
+    res.json({
+      success: true,
+      message: "Remaining users retrieved successfully",
+      data: {
+        users: remainingUsers
+      }
+    });
+  } catch (error) {
+    console.error("Error in getRemainingUsersInOrganization:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving remaining users",
+      error: error.message
+    });
+  }
+};
+
+export { register, login, getAllUsers, getRemainingUsersInOrganization };

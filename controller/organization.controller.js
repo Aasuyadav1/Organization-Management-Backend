@@ -1,4 +1,4 @@
-import Organization from "../models/organization-model.js";
+import { Organization } from "../models/organization-model.js";
 import { User } from "../models/user-model.js";
 
 // create organization
@@ -60,6 +60,22 @@ const deleteOrganization = async (req, res) => {
     res.json({ message: "Organization deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete organization" });
+  }
+};
+
+// get User's organizations 
+const getUserOrganizations = async (req, res) => {
+  try {
+
+    console.log("user id form get org", req.user)
+
+    const organizations = await Organization.find({ 'members.user': req.user._id }).populate('members.user');
+
+    console.log("organizations data getting ", organizations)
+    
+    res.json(organizations);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to get user's organizations" });
   }
 };
 
@@ -207,24 +223,8 @@ const manageMembers = async (req, res) => {
   }
 };
 
-// get User's organizations 
-const getUserOrganizations = async (req, res) => {
-  try {
-
-    console.log("user id form get org", req.user)
-
-    const organizations = await Organization.find({ 'members.user': req.user._id });
-
-    console.log("organizations data getting ", organizations)
-    
-    res.json(organizations);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to get user's organizations" });
-  }
-};
-
 // get organization all member by orgid 
-export const getOrganizationMembers = async (req, res) => {
+const getOrganizationMembers = async (req, res) => {
     try {
         const { organizationId } = req.params;
         const userId = req.user._id;
@@ -279,12 +279,44 @@ export const getOrganizationMembers = async (req, res) => {
     }
 }; 
 
-// export all controller functions
+// get organization by id
+const getOrganizationById = async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    const organization = await Organization.findById(orgId)
+      .populate('members.user', 'name email logo')
+      .populate('owner', 'name email logo');
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Organization retrieved successfully",
+      data: organization
+    });
+  } catch (error) {
+    console.error("Error in getOrganizationById:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving organization",
+      error: error.message
+    });
+  }
+};
+
 export {
   createOrganization,
   updateOrganization,
   deleteOrganization,
+  getUserOrganizations,
   updateUserRole,
   manageMembers,
-  getUserOrganizations,
+  getOrganizationMembers,
+  getOrganizationById
 };
