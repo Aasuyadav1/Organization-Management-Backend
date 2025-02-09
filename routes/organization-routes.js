@@ -19,7 +19,7 @@ router.use(authMiddleware);
 // Organization CRUD routes
 router.post("/", createOrganization);
 router.get("/all", getUserOrganizations);
-router.put("/:orgId", checkRole(["owner", "admin"]), updateOrganization);
+router.put("/:orgId", checkRole(["owner"]), updateOrganization);
 router.delete("/:orgId", checkRole(["owner"]), deleteOrganization);
 router.get("/:orgId", getOrganizationById);
 
